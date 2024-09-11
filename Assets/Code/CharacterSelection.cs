@@ -1,35 +1,44 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CharacterSelection : MonoBehaviour
 {
-    public GameObject ciara;
-    public GameObject vincent;
-    private string selectedCharacter;
+    private string currentSelection = "";
 
-    public void SelectCiara(){
-        selectedCharacter = "Ciara";
-        MoveMouseToOkButton();
-        Debug.Log("Ciara Selected");
 
-    }
-
-        public void SelectVincent(){
-        selectedCharacter = "Vincent";
-        MoveMouseToOkButton();
-        Debug.Log("Vincent Selected");
-    }
-
-    public string GetSelectedCharacter(){
-        return selectedCharacter;
-    }
-
-    public void MoveMouseToOkButton()
+    public void SelectCharacter1()
     {
-        Vector2 okButtonPosition = new Vector2(100, 100); // Placeholder, use actual screen position
-        Cursor.lockState = CursorLockMode.Locked;  // Freeze cursor
-        Cursor.lockState = CursorLockMode.None;    // Unlock to move
-        Cursor.SetCursor(null, okButtonPosition, CursorMode.Auto);
+        PlayerPrefs.SetString("SelectedCharacter", "Ciara");
+        currentSelection = "Ciara";
+        Debug.Log("Selected Ciara, Testing: " + currentSelection);
     }
+
+    public void SelectCharacter2()
+    {
+        PlayerPrefs.SetString("SelectedCharacter", "Vincent");
+        currentSelection = "Vincent";
+        Debug.Log("Selected Vincent, Testing: " + currentSelection);
+    }
+
+    public string GetSelectedCharacter()
+    {
+        return PlayerPrefs.GetString("SelectedCharacter", "None");
+    }
+
+    public void OnBackButtonPressed()
+    {
+        // Clear the current selection and re-enable hover effects
+        PlayerPrefs.DeleteKey("SelectedCharacter");
+        currentSelection = "";
+        Debug.Log("Returning to previous screen and clearing selection. Testing: " + currentSelection);
+    }
+
+    public void OnOkButtonPressed(){
+        SceneManager.LoadScene("Testing Enviroment");
+        Debug.Log("Loading Next scene...");
+    }
+
+
 }

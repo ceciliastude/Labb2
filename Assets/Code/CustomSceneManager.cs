@@ -1,50 +1,47 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class CustomSceneManager : MonoBehaviour
 {
-    public CharacterSelection characterSelection;
-    public GameObject ciara;
-    public GameObject vincent;
+    public GameObject ciaraSprite;  
+    public GameObject vincentSprite; 
+
+    public GameObject iconSprite1;
+    public GameObject iconSprite2;
+    public GameObject iconSprite3;
+    public GameObject iconSprite4;
 
     void Start()
     {
-        // Subscribe to the sceneLoaded event
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    void OnDestroy()
-    {
-        // Unsubscribe from the sceneLoaded event
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    public void LoadFighterScene(){
-        SceneManager.LoadScene("Testing Enviroment");
-        Debug.Log("Loading Next scene...");
-    }
-
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        // Call ActivateSelectedCharacter after the scene has loaded
-        ActivateSelectedCharacter();
-    }
-
-    public void ActivateSelectedCharacter(){
-        ciara.SetActive(false);
-        vincent.SetActive(false);
-
-        string selectedCharacter = characterSelection.GetSelectedCharacter();
-
-        if (selectedCharacter == "Ciara"){
-            ciara.SetActive(true);
-            vincent.SetActive(false);
+        // Ensure that this is the Testing Environment scene
+        if (SceneManager.GetActiveScene().name == "Testing Enviroment")
+        {
+            Debug.Log("Scene loaded");
+            ActivateSelectedCharacter();
         }
-        else if (selectedCharacter == "Vincent"){
-            ciara.SetActive(false);
-            vincent.SetActive(true);
+    }
+
+    public void ActivateSelectedCharacter()
+    {
+        // Retrieve the selected character from PlayerPrefs
+        string selectedCharacter = PlayerPrefs.GetString("SelectedCharacter", "None");
+
+        // Disable both sprites initially
+        if (ciaraSprite) ciaraSprite.SetActive(false);
+        if (vincentSprite) vincentSprite.SetActive(false);
+
+        // Enable the sprite based on the selected character
+        if (selectedCharacter == "Ciara")
+        {
+            if (ciaraSprite) ciaraSprite.SetActive(true);
+            if (iconSprite2) iconSprite2.SetActive(true);
+            if (iconSprite4) iconSprite4.SetActive(true);
+        }
+        else if (selectedCharacter == "Vincent")
+        {
+            if (vincentSprite) vincentSprite.SetActive(true);
+            if (iconSprite1) iconSprite1.SetActive(true);
+            if (iconSprite3) iconSprite3.SetActive(true);
         }
         else
         {

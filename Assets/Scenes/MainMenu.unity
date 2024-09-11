@@ -2913,53 +2913,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 207620097}
   m_CullTransparentMesh: 1
---- !u!1 &221235802
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 221235803}
-  - component: {fileID: 221235804}
-  m_Layer: 0
-  m_Name: Scene Manager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &221235803
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 221235802}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 52.263058, y: 21.649628, z: -627.05475}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2031456115}
-  m_RootOrder: 9
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &221235804
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 221235802}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8181add9803f574e987c0736361e14b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterSelection: {fileID: 1151117576}
-  ciara: {fileID: 0}
-  vincent: {fileID: 0}
 --- !u!1 &245526318
 GameObject:
   m_ObjectHideFlags: 0
@@ -3781,7 +3734,7 @@ MonoBehaviour:
           m_CallState: 2
         - m_Target: {fileID: 1151117576}
           m_TargetAssemblyTypeName: CharacterSelection, Assembly-CSharp
-          m_MethodName: SelectVincent
+          m_MethodName: SelectCharacter2
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -3790,6 +3743,18 @@ MonoBehaviour:
             m_FloatArgument: 0
             m_StringArgument: Vincent
             m_BoolArgument: 1
+          m_CallState: 2
+        - m_Target: {fileID: 2076429022}
+          m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+          m_MethodName: SetActive
+          m_Mode: 6
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
           m_CallState: 2
 --- !u!1 &334655461
 GameObject:
@@ -11001,6 +10966,18 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+        - m_Target: {fileID: 1151117576}
+          m_TargetAssemblyTypeName: CharacterSelection, Assembly-CSharp
+          m_MethodName: OnBackButtonPressed
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!114 &1091786069
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11280,8 +11257,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9578a03c9051a97499a666183e3c0007, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ciara: {fileID: 1480077113}
-  vincent: {fileID: 326444220}
 --- !u!1 &1160570301
 GameObject:
   m_ObjectHideFlags: 0
@@ -12697,21 +12672,9 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 1
           m_CallState: 2
-        - m_Target: {fileID: 221235804}
-          m_TargetAssemblyTypeName: CustomSceneManager, Assembly-CSharp
-          m_MethodName: LoadFighterScene
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 1
-          m_CallState: 2
-        - m_Target: {fileID: 221235804}
-          m_TargetAssemblyTypeName: CustomSceneManager, Assembly-CSharp
-          m_MethodName: ActivateSelectedCharacter
+        - m_Target: {fileID: 1151117576}
+          m_TargetAssemblyTypeName: CharacterSelection, Assembly-CSharp
+          m_MethodName: OnOkButtonPressed
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -14760,7 +14723,7 @@ MonoBehaviour:
           m_CallState: 2
         - m_Target: {fileID: 1151117576}
           m_TargetAssemblyTypeName: CharacterSelection, Assembly-CSharp
-          m_MethodName: SelectCiara
+          m_MethodName: SelectCharacter1
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -14769,6 +14732,30 @@ MonoBehaviour:
             m_FloatArgument: 0
             m_StringArgument: Ciara
             m_BoolArgument: 1
+          m_CallState: 2
+        - m_Target: {fileID: 1849377963}
+          m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+          m_MethodName: SetActive
+          m_Mode: 6
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+        - m_Target: {fileID: 1401078339}
+          m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+          m_MethodName: SetActive
+          m_Mode: 6
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
           m_CallState: 2
 --- !u!1 &1501406183
 GameObject:
@@ -19492,7 +19479,6 @@ RectTransform:
   - {fileID: 141213351}
   - {fileID: 112764871}
   - {fileID: 1151117575}
-  - {fileID: 221235803}
   m_Father: {fileID: 1431519354}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
