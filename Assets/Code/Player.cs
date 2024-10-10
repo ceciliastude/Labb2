@@ -1,134 +1,102 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class Player : MonoBehaviour
+public class Player : Fighter
 {
-    public float moveSpeed = 5f;    
-    public float jumpForce = 5f;
-    private Vector3 input;   
-    private bool isCollidingWithEnemy = false; // Track collision with enemy dummy
-    private bool isBlocking = false; // Track if the player is blocking
-    private bool isSpecialAttacking = false; // Track if the player is performing a special attack
+    private Vector3 input;
+    private Opponent enemy; 
+    private bool isCollidingWithEnemy = false; 
 
-    private Opponent enemy; // Reference to the enemy (Opponent)
-    public HealthManager healthManager;
-    public ChargeMeterManager chargeMeterManager;
-
-    private SpriteRenderer spriteRenderer; // Reference to the SpriteRenderer
-    public Sprite normalSprite;            
-    public Sprite blockSprite;
-    public List<Sprite> attackSprites;     
-    public float attackDuration = 0.5f;    
-    private int currentAttackIndex = 0;    
-
-    void Start()
+    protected override void Update()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        spriteRenderer.sprite = normalSprite; // Set the initial sprite
-    }
+        base.Update(); // Calls Fighter's shared Update logic
 
-    void Update()
-    {
-        if (isSpecialAttacking) return; // Disable all inputs during special attack
+        if (isSpecialAttacking || isParrying || isAttacking || isStunned) return;
 
-        input.x = Input.GetAxisRaw("Horizontal"); // A = -1, D = 1
-        input.y = 0;
-
-        // Calculate potential movement
-        Vector3 targetPos = transform.position;
-        targetPos.x += input.x * moveSpeed * Time.deltaTime;
-
-        // Check for potential collisions with the enemy dummy
-        if (!isCollidingWithEnemy || (input.x < 0 && !IsColliding()))
-        {
-            transform.position = targetPos; // Move if not colliding or moving away
-        }
-
-        // Block input
+        // Handle block input
         if (Input.GetKey(KeyCode.LeftShift))
         {
             isBlocking = true;
-            spriteRenderer.sprite = blockSprite; 
+            
         }
-        else if (!IsAttacking()) // If not attacking, revert to normal sprite
+        else
         {
             isBlocking = false;
-            spriteRenderer.sprite = normalSprite; 
         }
 
-        // Check for attack inputs
-        if (!isBlocking) // Only allow attacking if not blocking
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                ChangeSpriteDuringAttack();
-                if (isCollidingWithEnemy && enemy != null)
-                {
-                    enemy.TakeDamage(3); // Normal attack
-                    chargeMeterManager.AdjustPlayerChargeMeter(1);
-                    chargeMeterManager.AdjustEnemyChargeMeter(0.5f);
-                    Debug.Log("Normal ATK, charging 1");
-                }
-            }
+        //Parry logic
+        if (Input.GetKey(KeyCode.F)){
+
+            if (enemy != null){
+                StartCoroutine(Parry());
             
-            if (Input.GetKeyDown(KeyCode.Q))
-            {
-                if (chargeMeterManager.IsFullyCharged())
+                if (isAttacking && enemy.isParrying && isCollidingWithEnemy)
                 {
-                    StartCoroutine(PerformSpecialAttack()); // Start the special attack sequence
+                    TriggerStun(); 
                 }
-                else
+                if (enemy.isAttacking && isParrying && isCollidingWithEnemy)
                 {
-                    Debug.Log("Charge meter not full! Cannot perform special attack.");
+                    enemy.TriggerStun(); 
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.E))
+        }
+
+        // Movement input
+        if (!isBlocking)
+        {
+            input.x = Input.GetAxisRaw("Horizontal");
+            if (Mathf.Abs(input.x) > 0.1f) 
             {
-                ChangeSpriteDuringAttack();
-                if (isCollidingWithEnemy && enemy != null)
-                {
-                    enemy.TakeDamage(5); // Counter attack
-                    chargeMeterManager.AdjustPlayerChargeMeter(2);
-                    chargeMeterManager.AdjustEnemyChargeMeter(1f);
-                    Debug.Log("Counter ATK, charging 2");
-                }
+                isWalking = true;
+                Vector3 targetPos = transform.position;
+                targetPos.x += input.x * moveSpeed * Time.deltaTime;
+                transform.position = targetPos; 
             }
+            else
+            {
+                isWalking = false; 
+            }
+
         }
-    }
 
-    private IEnumerator PerformSpecialAttack()
-    {
-        isSpecialAttacking = true; // Disable inputs
-        chargeMeterManager.ActivateSpecialAttack(); // Activate special attack logic
-        yield return new WaitForSeconds(3f); // Wait for the duration of the special attack
-        isSpecialAttacking = false; // Re-enable inputs
-    }
-
-    private void ChangeSpriteDuringAttack()
-    {
-        if (attackSprites.Count > 0)
+        // Attack input
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            spriteRenderer.sprite = attackSprites[currentAttackIndex];
-            StartCoroutine(ResetSpriteAfterDelay(attackDuration));
+            isAttacking = true;
+            ChangeSpriteDuringAttack();
+            if (isCollidingWithEnemy && enemy != null && !enemy.isBlocking) 
+            {
+                enemy.TakeDamage(3, false);
+                chargeMeterManager.AdjustPlayerChargeMeter(1f);
+                chargeMeterManager.AdjustEnemyChargeMeter(0.5f);
+            }
+            StartCoroutine(ResetAttackState());
         }
-    }
-
-    private IEnumerator ResetSpriteAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (!isBlocking) // Only reset to normal sprite if not blocking
+        if (Input.GetKeyDown(KeyCode.E) && enemy.isStunned)
         {
-            spriteRenderer.sprite = normalSprite; 
+            isAttacking = true;
+            ChangeSpriteDuringAttack();
+            if (isCollidingWithEnemy && enemy != null) 
+            {
+                enemy.TakeDamage(5, false); // Stronger attack
+                chargeMeterManager.AdjustPlayerChargeMeter(2f);
+                chargeMeterManager.AdjustEnemyChargeMeter(1f);
+            }
+            StartCoroutine(ResetAttackState());
         }
-        currentAttackIndex = (currentAttackIndex + 1) % attackSprites.Count; 
+
+        // Special attack input
+        if (Input.GetKeyDown(KeyCode.Q) && chargeMeterManager.IsFullyCharged(true))
+        {
+            StartCoroutine(PerformSpecialAttack(true));
+        }
     }
 
-    private bool IsAttacking()
+    private IEnumerator ResetAttackState()
     {
-        // Check if the player is in the attack animation
-        return spriteRenderer.sprite != normalSprite && spriteRenderer.sprite != blockSprite;
+        yield return new WaitForSeconds(attackDuration);
+        isAttacking = false;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -154,9 +122,13 @@ public class Player : MonoBehaviour
         }
     }
 
-    private bool IsColliding()
-    {
-        // Check for a collider to the left of the player
-        return Physics.Raycast(transform.position, Vector3.left, 0.5f); 
+    public void TriggerStun() {
+        if (!isStunned) {
+            isParrying = false;
+            isAttacking = false;
+            StartCoroutine(Stunned());
+        }
     }
+
+
 }

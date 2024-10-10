@@ -6,8 +6,11 @@ using UnityEngine.SceneManagement;
 public class CharacterSelection : MonoBehaviour
 {
     private string currentSelection = "";
+    public LoadingScreen loadingScreen;
 
-
+    public void Start(){
+        loadingScreen = FindObjectOfType<LoadingScreen>();
+    }
     public void SelectCharacter1()
     {
         PlayerPrefs.SetString("SelectedCharacter", "Ciara");
@@ -34,11 +37,4 @@ public class CharacterSelection : MonoBehaviour
         currentSelection = "";
         Debug.Log("Returning to previous screen and clearing selection. Testing: " + currentSelection);
     }
-
-    public void OnOkButtonPressed(){
-        SceneManager.LoadScene("Testing Enviroment");
-        Debug.Log("Loading Next scene...");
-    }
-
-
 }

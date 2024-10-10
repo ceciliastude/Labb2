@@ -6,10 +6,13 @@ using UnityEngine.SceneManagement;
 
 public class HealthManager : MonoBehaviour
 {
-    public Image healthBar;
-    public float healthAmount = 100f;
+    public Image playerHealthBar;
+    public Image enemyHealthBar;
+    public float playerHealthAmount = 100f;
+    public float enemyHealthAmount = 100f;
     [SerializeField] private float drainTime = 0.25f;
-    private float target = 1f;
+    private float targetPlayer = 1f;
+    private float targetEnemy = 1f;
     private Coroutine drainHealthBar;
     [SerializeField] private Gradient healthBarGradient;
     private Color newHealthBarColor;
@@ -18,29 +21,52 @@ public class HealthManager : MonoBehaviour
 
     void Start()
     {
-        CheckHealthBarGradientAmount();
+        UpdateHealthBarColor(playerHealthBar, playerHealthAmount);
+        UpdateHealthBarColor(enemyHealthBar, enemyHealthAmount);
     }
 
     void Update()
     {
-        if (healthAmount <= 0)
+        if (playerHealthAmount <= 0 && !FindObjectOfType<Player>().isDefeated)
         {
-            SceneManager.LoadScene("Testing Enviroment");
+            Debug.Log("Player died.");
+            FindObjectOfType<Player>().HandleDeath(true);
+            FindObjectOfType<CameraManager>().ZoomOnDefeatedFighter(true);
+        }
+
+        if (enemyHealthAmount <= 0 && !FindObjectOfType<Opponent>().isDefeated)
+        {
+            Debug.Log("Opponent died.");
+            FindObjectOfType<Opponent>().HandleDeath(false);
+            FindObjectOfType<CameraManager>().ZoomOnDefeatedFighter(false);
         }
     }
 
-    public void TakeDamage(float damage)
+
+
+    public void TakeDamage(float damage, bool isPlayer)
     {
-        healthAmount -= damage;
-        target = healthAmount / 100f;
-        drainHealthBar = StartCoroutine(DrainHealthBar());
+        if (isPlayer)
+        {
+            playerHealthAmount -= damage;
+            targetPlayer = playerHealthAmount / 100f;
+            drainHealthBar = StartCoroutine(DrainHealthBar(playerHealthBar, targetPlayer));
+        }
+        else
+        {
+            enemyHealthAmount -= damage;
+            targetEnemy = enemyHealthAmount / 100f;
+            drainHealthBar = StartCoroutine(DrainHealthBar(enemyHealthBar, targetEnemy));
+        }
     }
 
-    private IEnumerator DrainHealthBar()
+    private IEnumerator DrainHealthBar(Image healthBar, float target)
     {
         float fillAmount = healthBar.fillAmount;
         float elapsedTime = 0f;
         Color currentColor = healthBar.color;
+
+        newHealthBarColor = healthBarGradient.Evaluate(target);
 
         while (elapsedTime < drainTime)
         {
@@ -51,8 +77,16 @@ public class HealthManager : MonoBehaviour
         }
     }
 
-    private void CheckHealthBarGradientAmount()
+    private void UpdateHealthBarColor(Image healthBar, float healthAmount)
     {
+        float target = healthAmount / 100f;
         newHealthBarColor = healthBarGradient.Evaluate(target);
+        healthBar.color = newHealthBarColor;
+    }
+
+    private void DestroyOpponent()
+    {
+        // Logic for destroying the opponent, like removing the opponent object, playing animations, etc.
+        Debug.Log("Opponent destroyed.");
     }
 }

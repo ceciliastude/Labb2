@@ -1,30 +1,26 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ChargeMeterManager : MonoBehaviour
 {
-    // Charge meter for player
     public Image playerChargeMeter;                
     public GameObject playerChargedMeterUI;       
     public GameObject playerActivatedMeter;        
 
-    // Charge meter for opponent
     public Image enemyChargeMeter;                
     public GameObject enemyChargedMeterUI;       
     public GameObject enemyActivatedMeter;        
 
-    public float playerChargeAmount = 0f; // Player's charge amount
-    public float enemyChargeAmount = 0f;  // Enemy's charge amount
+    public float playerChargeAmount = 0f; 
+    public float enemyChargeAmount = 0f;  
     [SerializeField] private float maxChargeAmount = 10f;
-    [SerializeField] private float chargeTime = 0.25f;
-    [SerializeField] private float enemyChargeTime = 0.25f; // Add this variable for enemy charge time
-    [SerializeField] private float drainTime = 0.25f;  // Drain time for the charge reset
-    private float target = 1f;
-    private Coroutine chargingMeter;
-    private Coroutine enemyChargingMeter; // Coroutine for enemy charging
+    [SerializeField] private float chargeTime = 0.25f; // Smooth time to fill charge meter
+    [SerializeField] private float drainTime = 0.25f;  
+
+    private Coroutine playerChargingMeter;  // Separate coroutine for player
+    private Coroutine enemyChargingMeter;   // Separate coroutine for enemy
     private Coroutine drainingMeter;
 
     private bool isPerformingSpecialAttack = false;
@@ -35,12 +31,12 @@ public class ChargeMeterManager : MonoBehaviour
         playerChargeAmount = 0f;
         enemyChargeAmount = 0f;
         UpdateChargeMeters();
+
         playerChargedMeterUI.SetActive(false); 
         playerActivatedMeter.SetActive(false);
         enemyChargedMeterUI.SetActive(false); 
         enemyActivatedMeter.SetActive(false);
 
-        // Find the HealthManager component in the scene
         healthManager = FindObjectOfType<HealthManager>();
         if (healthManager == null)
         {
@@ -48,22 +44,19 @@ public class ChargeMeterManager : MonoBehaviour
         }
     }
 
-    // Method to adjust the player's charge meter
     public void AdjustPlayerChargeMeter(float chargeCount)
     {
-        if (!isPerformingSpecialAttack)  // Only charge when not performing special attack
+        if (!isPerformingSpecialAttack)  
         {
-            playerChargeAmount += chargeCount;
-            playerChargeAmount = Mathf.Clamp(playerChargeAmount, 0, maxChargeAmount); // Keep charge between 0 and max
+            float previousAmount = playerChargeAmount;  // Save previous value for smooth transition
+            playerChargeAmount = Mathf.Clamp(playerChargeAmount + chargeCount, 0, maxChargeAmount);
 
-            target = playerChargeAmount / maxChargeAmount;
-            if (chargingMeter != null)
+            if (playerChargingMeter != null)
             {
-                StopCoroutine(chargingMeter); // Stop any running charge coroutine
+                StopCoroutine(playerChargingMeter); // Stop previous player coroutine
             }
-            chargingMeter = StartCoroutine(Charger(playerChargeMeter));
+            playerChargingMeter = StartCoroutine(SmoothChargeMeter(playerChargeMeter, previousAmount, playerChargeAmount, chargeTime));
 
-            // Check if charge is full
             if (playerChargeAmount >= maxChargeAmount)
             {
                 ActivatePlayerChargedMeter();
@@ -71,95 +64,98 @@ public class ChargeMeterManager : MonoBehaviour
         }
     }
 
-    // Method to adjust the enemy's charge meter
     public void AdjustEnemyChargeMeter(float chargeCount)
     {
-        if (enemyChargingMeter != null)
+        if (!isPerformingSpecialAttack) 
         {
-            StopCoroutine(enemyChargingMeter); // Stop any running enemy charge coroutine
+            float previousAmount = enemyChargeAmount;  // Save previous value for smooth transition
+            enemyChargeAmount = Mathf.Clamp(enemyChargeAmount + chargeCount, 0, maxChargeAmount);
+
+            if (enemyChargingMeter != null)
+            {
+                StopCoroutine(enemyChargingMeter);  // Stop previous enemy coroutine
+            }
+            enemyChargingMeter = StartCoroutine(SmoothChargeMeter(enemyChargeMeter, previousAmount, enemyChargeAmount, chargeTime));
+
+            if (enemyChargeAmount >= maxChargeAmount)
+            {
+                ActivateEnemyChargedMeter();
+            }
         }
-        enemyChargingMeter = StartCoroutine(EnemyCharger(chargeCount));
     }
 
-    // Coroutine to handle the enemy charging process
-    private IEnumerator EnemyCharger(float chargeCount)
+    private IEnumerator SmoothChargeMeter(Image chargeMeter, float startAmount, float endAmount, float duration)
     {
         float elapsedTime = 0f;
-        float fillAmount = enemyChargeMeter.fillAmount;
-
-        // Gradually charge the enemy meter over the set charge time
-        while (elapsedTime < enemyChargeTime)
+        while (elapsedTime < duration)
         {
             elapsedTime += Time.deltaTime;
-            enemyChargeAmount += (chargeCount / 2) * (Time.deltaTime / enemyChargeTime); // Charge at half rate
-            enemyChargeAmount = Mathf.Clamp(enemyChargeAmount, 0, maxChargeAmount);
-            enemyChargeMeter.fillAmount = enemyChargeAmount / maxChargeAmount;
+            chargeMeter.fillAmount = Mathf.Lerp(startAmount / maxChargeAmount, endAmount / maxChargeAmount, elapsedTime / duration);
             yield return null;
         }
-
-        // Final update
-        enemyChargeAmount = Mathf.Clamp(enemyChargeAmount, 0, maxChargeAmount);
-        if (enemyChargeAmount >= maxChargeAmount)
-        {
-            ActivateEnemyChargedMeter();
-        }
+        chargeMeter.fillAmount = endAmount / maxChargeAmount;  // Ensure exact value at the end
     }
 
-    // Activates the "charged" meter UI when fully charged for player
     private void ActivatePlayerChargedMeter()
     {
-        playerChargedMeterUI.SetActive(true);            // Show the charged UI
-        playerChargeMeter.gameObject.SetActive(false);   // Hide the normal charge meter
+        playerChargedMeterUI.SetActive(true);          
+        playerChargeMeter.gameObject.SetActive(false);  
     }
 
-    // Activates the "charged" meter UI when fully charged for enemy
     private void ActivateEnemyChargedMeter()
     {
-        enemyChargedMeterUI.SetActive(true);            // Show the charged UI
-        enemyChargeMeter.gameObject.SetActive(false);   // Hide the normal charge meter
+        enemyChargedMeterUI.SetActive(true);           
+        enemyChargeMeter.gameObject.SetActive(false);   
     }
 
-    // Method to start the special attack sequence
-    public void ActivateSpecialAttack()
+    public void ActivateSpecialAttack(bool isPlayer)
     {
-        if (!isPerformingSpecialAttack && IsFullyCharged())
+        if (!isPerformingSpecialAttack && IsFullyCharged(isPlayer))
         {
-            StartCoroutine(SpecialAttackSequence());
+            StartCoroutine(SpecialAttackSequence(isPlayer));
         }
     }
 
-    // Coroutine to handle the special attack sequence
-    private IEnumerator SpecialAttackSequence()
+    private IEnumerator SpecialAttackSequence(bool isPlayer)
     {
         Debug.Log("Activating special attack sequence...");
         isPerformingSpecialAttack = true;
 
-        // Hide the charged meter and show the activated meter
-        playerChargedMeterUI.SetActive(false);
-        playerActivatedMeter.SetActive(true);
-
-        // Wait for 3 seconds (special attack duration)
-        yield return new WaitForSeconds(3f);
-
-        // Perform the special attack (e.g., damage)
-        if (healthManager != null)
+        if (isPlayer)
         {
-            healthManager.TakeDamage(7);  // Example: Take 7 damage during special attack
-            Debug.Log("Performing Special Attack...");
+            playerChargedMeterUI.SetActive(false);
+            playerActivatedMeter.SetActive(true);
+        }
+        else
+        {
+            enemyChargedMeterUI.SetActive(false);
+            enemyActivatedMeter.SetActive(true);
         }
 
-        // Wait for 1 second after the special attack
+        yield return new WaitForSeconds(3f);
+
+        if (healthManager != null)
+        {
+            healthManager.TakeDamage(7, !isPlayer);
+            Debug.Log(isPlayer ? "Player Performing Special Attack..." : "Opponent Performing Special Attack...");
+        }
+
         yield return new WaitForSeconds(1f);
 
-        // Hide the activated meter and reset the charge meter
-        Debug.Log("Resetting meter...");
-        playerActivatedMeter.SetActive(false);
-        ResetPlayerChargeMeter();
+        if (isPlayer)
+        {
+            playerActivatedMeter.SetActive(false);
+            ResetPlayerChargeMeter();
+        }
+        else
+        {
+            enemyActivatedMeter.SetActive(false); 
+            ResetEnemyChargeMeter();            
+        }
 
-        isPerformingSpecialAttack = false;  // Re-enable player input
+        isPerformingSpecialAttack = false;  
     }
 
-    // Resets the charge meter for the player with a gradual draining effect
     public void ResetPlayerChargeMeter()
     {
         playerChargedMeterUI.SetActive(false);          
@@ -173,54 +169,46 @@ public class ChargeMeterManager : MonoBehaviour
         drainingMeter = StartCoroutine(DrainChargeMeter(playerChargeMeter, (amount) => playerChargeAmount = amount, playerChargeAmount));
     }   
 
-    // Gradually drains the charge meter
+    public void ResetEnemyChargeMeter()
+    {
+        enemyChargedMeterUI.SetActive(false);          
+        enemyChargeMeter.gameObject.SetActive(true);   
+
+        if (drainingMeter != null)
+        {
+            StopCoroutine(drainingMeter);
+        }
+
+        drainingMeter = StartCoroutine(DrainChargeMeter(enemyChargeMeter, (amount) => enemyChargeAmount = amount, enemyChargeAmount));        
+    }
+
     private IEnumerator DrainChargeMeter(Image chargeMeter, Action<float> updateChargeAmount, float chargeAmount)
     {
         float initialChargeAmount = chargeAmount;
         float elapsedTime = 0f;
 
-        // Gradually drain the charge meter over the set drain time
         while (elapsedTime < drainTime)
         {
             elapsedTime += Time.deltaTime;
             chargeAmount = Mathf.Lerp(initialChargeAmount, 0f, elapsedTime / drainTime);
-            updateChargeAmount(chargeAmount); // Use a delegate to update the charge amount
-            UpdateChargeMeters();  // Update the charge meter UI based on the new charge amount
+            updateChargeAmount(chargeAmount); 
+            UpdateChargeMeters();  
             yield return null;
         }
 
-        // Reset charge meter UI
         chargeAmount = 0f;
-        updateChargeAmount(chargeAmount); // Reset the charge amount
+        updateChargeAmount(chargeAmount); 
         UpdateChargeMeters();
-        playerChargedMeterUI.SetActive(false);           // Hide charged meter
-        chargeMeter.gameObject.SetActive(true);    // Show normal meter again
     }
 
-    // Coroutine to animate the charging process
-    private IEnumerator Charger(Image chargeMeter)
-    {
-        float fillAmount = chargeMeter.fillAmount;
-        float elapsedTime = 0f;
-
-        while (elapsedTime < chargeTime)
-        {
-            elapsedTime += Time.deltaTime;
-            chargeMeter.fillAmount = Mathf.Lerp(fillAmount, target, elapsedTime / chargeTime);
-            yield return null;
-        }
-    }
-
-    // Updates both charge meters' fill amounts
     private void UpdateChargeMeters()
     {
         playerChargeMeter.fillAmount = playerChargeAmount / maxChargeAmount;
         enemyChargeMeter.fillAmount = enemyChargeAmount / maxChargeAmount;
     }
 
-    // Check if the player's charge meter is fully charged
-    public bool IsFullyCharged()
+    public bool IsFullyCharged(bool isPlayer)
     {
-        return playerChargeAmount >= maxChargeAmount;
+        return isPlayer ? playerChargeAmount >= maxChargeAmount : enemyChargeAmount >= maxChargeAmount; 
     }
 }

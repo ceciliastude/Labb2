@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - EnemyDummy
+  - SecondaryCamera
+  - ThirdCamera
   layers:
   - Default
   - TransparentFX
